@@ -1,7 +1,7 @@
 from openai import OpenAI
 from PIL import Image
 
-from anomally.utils.images import encode_image_base64
+from flib.utils.images import encode_image_base64
 
 class OpenAIGPTModel():
     def __init__(self, model_name: str, api_key: str):
