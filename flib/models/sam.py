@@ -47,7 +47,9 @@ class LocalFastSAMModel:
             image[mask == 1] = color
             # Find contours and add numbered labels
             contours, _ = cv2.findContours(
-                (mask * 255).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                (mask * 255).astype(np.uint8),
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE,
             )
             for i, contour in enumerate(contours):
                 M = cv2.moments(contour)

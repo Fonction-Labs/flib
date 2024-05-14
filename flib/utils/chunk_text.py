@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ChunkSettings(BaseModel):
     token_context_size: int
     safety_percentage: float = 0.7
@@ -7,11 +8,14 @@ class ChunkSettings(BaseModel):
 
     @property
     def chunk_size(self):
-        return int(self.token_context_size * self.characters_per_token * self.safety_percentage)
+        return int(
+            self.token_context_size * self.characters_per_token * self.safety_percentage
+        )
 
     @property
     def chunk_overlap(self):
         return int(self.chunk_size * 0.1)
+
 
 def get_text_chunks(text: str, chunk_size: int, chunk_overlap: int) -> str:
     """

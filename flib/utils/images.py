@@ -26,6 +26,6 @@ def encode_image_base64(image):
     Takes a PIL image, converts it to bytes, and encodes it with base 64.
     """
     img_byte_array = io.BytesIO()
-    image.save(img_byte_array, format="png") #image.format)
+    image.save(img_byte_array, format="png")  # image.format)
     img_byte_array = img_byte_array.getvalue()
     return base64.b64encode(img_byte_array).decode("utf-8")
