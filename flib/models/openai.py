@@ -1,3 +1,4 @@
+from typing import Optional
 from openai import OpenAI
 from joblib import delayed
 from PIL import Image
@@ -26,8 +27,8 @@ class OpenAIGPTModel(BaseModel):
         ]
 
     def run(
-        self, prompt: str, images: (None | list[Image.Image]) = None, temperature: float = 0.0
-    ) -> str:
+        self, prompt: str, images: Optional[list[Image.Image]] = None, temperature: float = 0.0
+    ) -> Optional[str]:
         if images is None:
             images = []
         encoded_images = [encode_image_base64(image) for image in images]

@@ -5,7 +5,7 @@ import base64
 from PIL import Image
 
 
-def write_file_to_temp_folder(file: str, temp_dir: str) -> str:
+def write_file_to_temp_folder(file: io.BytesIO, temp_dir: str) -> str:
     """
     Writes a Streamlit File object to the session temporary folder, and returns the filepath.
     """
