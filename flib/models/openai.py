@@ -1,4 +1,3 @@
-from typing import Optional
 from openai import OpenAI
 from joblib import delayed
 from PIL import Image
@@ -27,35 +26,29 @@ class OpenAIGPTModel(BaseModel):
         ]
 
     def run(
-        self, prompt: str, images: Optional[list[Image.Image]] = None, temperature: float = 0.0
-    ) -> Optional[str]:
+        self, prompt: str, images: (None | list[Image.Image]) = None, temperature: float = 0.0
+    ) -> (None | str):
         if images is None:
             images = []
         encoded_images = [encode_image_base64(image) for image in images]
-
-        from openai.types.chat_completion_system_message_param import ChatCompletionSystemMessageParam
-        from openai.types.chat_completion_user_message_param import ChatCompletionUserMessageParam
-        system_message = ChatCompletionSystemMessageParam(content="You are a helpful assistant.")
-        user_message = ChatCompletionUserMessageParam(content=[{"type": "text", "text": prompt}] + [{ "type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"},} for image in encoded_images])
-        messages = (system_message, user_message)
-        #messages = [
-        #    {"role": "system", "content": "You are a helpful assistant."},
-        #    {
-        #        "role": "user",
-        #        "content": [{"type": "text", "text": prompt}]
-        #        + [
-        #            {
-        #                "type": "image_url",
-        #                "image_url": {"url": f"data:image/jpeg;base64,{image}"},
-        #            }
-        #            for image in images
-        #        ],
-        #    },
-        #]
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": prompt}]
+                + [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                    }
+                    for image in images
+                ],
+            },
+        ]
         return (
             self.client.chat.completions.create(
                 model=self.model_name,
-                messages=messages,
+                messages=messages, # type: ignore
                 temperature=temperature,
             )
             .choices[0]
