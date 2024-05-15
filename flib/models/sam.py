@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
+from .base import BaseModel
 
-
-class LocalFastSAMModel:
+class LocalFastSAMModel(BaseModel):
     def __init__(self):
         self.model = FastSAM("./FastSAM-x.pt")
         self.device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -26,7 +26,7 @@ class LocalFastSAMModel:
         image = self.combine_masks(annotations)
         return Image.fromarray(image.astype(np.uint8))
 
-    def combine_masks(self, masks):
+    def combine_masks(self, masks: list[np.array]) -> np.array:
         # This is from the FastSAM code repo
         for i, mask in enumerate(masks):
             mask = cv2.morphologyEx(
@@ -68,7 +68,7 @@ class LocalFastSAMModel:
         return image
 
 
-class LocalSAMModel:
+class LocalSAMModel(BaseModel):
     def __init__(self):
         self.sam = sam_model_registry["default"](checkpoint="./sam_vit_h_4b8939.pth")
         # Run on Metal if available (macOS) - doesn't work:

@@ -2,8 +2,9 @@ import torch
 import clip
 from PIL import Image
 
+from .base import BaseModel
 
-class LocalCLIPModel:
+class LocalCLIPModel(BaseModel):
     # https://github.com/openai/CLIP
 
     def __init__(self):

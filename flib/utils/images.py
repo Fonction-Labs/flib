@@ -5,7 +5,7 @@ import base64
 from PIL import Image
 
 
-def write_file_to_temp_folder(file, temp_dir):
+def write_file_to_temp_folder(file: str, temp_dir: str) -> str:
     """
     Writes a Streamlit File object to the session temporary folder, and returns the filepath.
     """
@@ -15,13 +15,13 @@ def write_file_to_temp_folder(file, temp_dir):
     return path
 
 
-def load_image(image_path: str, use_cv2: bool = False):
+def load_image(image_path: str, use_cv2: bool = False) -> Image:
     if use_cv2:
         return cv2.imread(image_path)
     return Image.open(image_path)
 
 
-def encode_image_base64(image):
+def encode_image_base64(image: Image) -> str:
     """
     Takes a PIL image, converts it to bytes, and encodes it with base 64.
     """
