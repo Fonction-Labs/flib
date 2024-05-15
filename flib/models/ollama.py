@@ -38,7 +38,7 @@ class OllamaModel(BaseModel):
 
     def run_batch(
         self, prompts: list[str], temperature: float = 0.0, parallel: bool = False
-    ):
+    ) -> list[str]:
         if parallel:
             warn(
                 "Parallelization is not available for Ollama models. Batch will not be parallelized."

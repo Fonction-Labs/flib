@@ -15,17 +15,17 @@ def write_file_to_temp_folder(file: str, temp_dir: str) -> str:
     return path
 
 
-def load_image(image_path: str, use_cv2: bool = False) -> Image:
+def load_image(image_path: str, use_cv2: bool = False) -> (cv2.typing.MatLike | Image.Image):
     if use_cv2:
         return cv2.imread(image_path)
     return Image.open(image_path)
 
 
-def encode_image_base64(image: Image) -> str:
+def encode_image_base64(image: Image.Image) -> str:
     """
     Takes a PIL image, converts it to bytes, and encodes it with base 64.
     """
     img_byte_array = io.BytesIO()
     image.save(img_byte_array, format="png")  # image.format)
-    img_byte_array = img_byte_array.getvalue()
-    return base64.b64encode(img_byte_array).decode("utf-8")
+    img_bytes = img_byte_array.getvalue()
+    return base64.b64encode(img_bytes).decode("utf-8")

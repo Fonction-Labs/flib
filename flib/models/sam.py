@@ -12,21 +12,20 @@ class LocalFastSAMModel(BaseModel):
         self.model = FastSAM("./FastSAM-x.pt")
         self.device = "mps" if torch.backends.mps.is_available() else "cpu"
 
-    def run(self, image: Image) -> Image:
+    def run(self, image: Image.Image) -> Image.Image:
         everything_results = self.model(
             image, device=self.device, retina_masks=True, imgsz=512, conf=0.4, iou=0.9
         )
         prompt_process = FastSAMPrompt(image, everything_results, device=self.device)
         annotations = prompt_process.everything_prompt().detach().cpu().numpy()
-
         # Sort by area
         annotations = list(annotations)
         annotations.sort(key=lambda mask: np.sum(mask), reverse=True)
         # Combine masks
-        image = self.combine_masks(annotations)
-        return Image.fromarray(image.astype(np.uint8))
+        output_image = self.combine_masks(annotations)
+        return Image.fromarray(output_image.astype(np.uint8))
 
-    def combine_masks(self, masks: list[np.array]) -> np.array:
+    def combine_masks(self, masks: list[np.ndarray]) -> np.ndarray:
         # This is from the FastSAM code repo
         for i, mask in enumerate(masks):
             mask = cv2.morphologyEx(
@@ -77,17 +76,17 @@ class LocalSAMModel(BaseModel):
         # self.sam.to(device=device)
         self.mask_generator = SamAutomaticMaskGenerator(self.sam)
 
-    def run(self, image):
+    def run(self, image: cv2.typing.MatLike) -> Image.Image:
         return self.generate_segmented_image(image)
 
-    def generate_segmented_image(self, image):  # cv2 image...
+    def generate_segmented_image(self, image: cv2.typing.MatLike) -> Image.Image:  # cv2 image...
         anns = self.mask_generator.generate(image)
         mask = self.get_mask(anns)
         dst = cv2.addWeighted(mask, 0.6, mask, 0.4, 0.0)
         dst = self.add_labels(dst, anns)
         return Image.fromarray(dst.astype(np.uint8))
 
-    def get_mask(self, anns):
+    def get_mask(self, anns) -> np.ndarray:
         if len(anns) == 0:
             raise ValueError("List of mask is empty")
         sorted_anns = sorted(anns, key=(lambda x: x["area"]), reverse=True)

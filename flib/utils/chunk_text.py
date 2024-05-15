@@ -17,7 +17,7 @@ class ChunkSettings(BaseModel):
         return int(self.chunk_size * 0.1)
 
 
-def get_text_chunks(text: str, chunk_size: int, chunk_overlap: int) -> str:
+def get_text_chunks(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     """
     Split text into chunks for processing.
 
