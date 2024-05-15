@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from flib.utils.images import encode_image_base64
 from flib.utils.parallel import ParallelTqdm
+from .base import BaseModel
 
 MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
     "gpt-3.5-turbo": 4096,
@@ -16,7 +17,7 @@ MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE = {
 }
 
 
-class OpenAIGPTModel:
+class OpenAIGPTModel(BaseModel):
     def __init__(self, model_name: str, api_key: str):
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
@@ -25,11 +26,11 @@ class OpenAIGPTModel:
         ]
 
     def run(
-        self, prompt: str, images: (None | list[Image]) = None, temperature: float = 0.0
-    ):
+        self, prompt: str, images: (None | list[Image.Image]) = None, temperature: float = 0.0
+    ) -> (None | str):
         if images is None:
             images = []
-        images = [encode_image_base64(image) for image in images]
+        encoded_images = [encode_image_base64(image) for image in images]
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
             {
@@ -44,11 +45,10 @@ class OpenAIGPTModel:
                 ],
             },
         ]
-
         return (
             self.client.chat.completions.create(
                 model=self.model_name,
-                messages=messages,
+                messages=messages, # type: ignore
                 temperature=temperature,
             )
             .choices[0]
@@ -58,7 +58,7 @@ class OpenAIGPTModel:
     def run_batch(
         self,
         prompts: list[str],
-        list_images: (None | list[list[Image]]) = None,
+        list_images: (None | list[(None | list[Image.Image])]) = None,
         temperature: float = 0.0,
         parallel: bool = False,
     ):
@@ -75,7 +75,7 @@ class OpenAIGPTModel:
         ]
 
 
-class OpenAIEmbeddingModel:
+class OpenAIEmbeddingModel(BaseModel):
     def __init__(self, model_name: str, api_key: str):
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
@@ -92,7 +92,7 @@ class OpenAIEmbeddingModel:
         self,
         prompts: list[str],
         parallel: bool = False,
-    ):
+    ) -> list[list[float]]:
         if parallel:
             return ParallelTqdm(n_jobs=8, prefer="threads", total_tasks=len(prompts))(
                 delayed(self.run)(prompt) for prompt in prompts

@@ -7,17 +7,17 @@ class ChunkSettings(BaseModel):
     characters_per_token: int = 4
 
     @property
-    def chunk_size(self):
+    def chunk_size(self) -> int:
         return int(
             self.token_context_size * self.characters_per_token * self.safety_percentage
         )
 
     @property
-    def chunk_overlap(self):
+    def chunk_overlap(self) -> int:
         return int(self.chunk_size * 0.1)
 
 
-def get_text_chunks(text: str, chunk_size: int, chunk_overlap: int) -> str:
+def get_text_chunks(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     """
     Split text into chunks for processing.
 

@@ -1,10 +1,10 @@
 import ollama
-
 from PIL import Image
 from tqdm import tqdm
 from warnings import warn
-from flib.utils.images import encode_image_base64
 
+from flib.utils.images import encode_image_base64
+from .base import BaseModel
 
 MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
     "mistral": 4096,
@@ -15,7 +15,7 @@ MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE = {
 }
 
 
-class OllamaModel:
+class OllamaModel(BaseModel):
     def __init__(self, model_name: str):
         ollama.pull(model_name)
         self.model_name = model_name
@@ -38,7 +38,7 @@ class OllamaModel:
 
     def run_batch(
         self, prompts: list[str], temperature: float = 0.0, parallel: bool = False
-    ):
+    ) -> list[str]:
         if parallel:
             warn(
                 "Parallelization is not available for Ollama models. Batch will not be parallelized."
@@ -46,7 +46,7 @@ class OllamaModel:
         return [self.run(prompt, temperature) for prompt in tqdm(prompts)]
 
 
-class OllamaEmbeddingModel:
+class OllamaEmbeddingModel(BaseModel):
     def __init__(self, model_name: str):
         ollama.pull(model_name)
         self.model_name = model_name
@@ -55,7 +55,7 @@ class OllamaEmbeddingModel:
     def run(self, prompt: str) -> list[float]:
         return ollama.embeddings(model=self.model_name, prompt=prompt)["embedding"]
 
-    def run_batch(self, prompts: list[str], parallel: bool = False):
+    def run_batch(self, prompts: list[str], parallel: bool = False) -> list[list[float]]:
         if parallel:
             warn(
                 "Parallelization is not available for Ollama models. Batch will not be parallelized."

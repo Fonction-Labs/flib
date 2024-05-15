@@ -2,8 +2,9 @@ import torch
 import clip
 from PIL import Image
 
+from .base import BaseModel
 
-class LocalCLIPModel:
+class LocalCLIPModel(BaseModel):
     # https://github.com/openai/CLIP
 
     def __init__(self):
@@ -15,7 +16,7 @@ class LocalCLIPModel:
         self.model, self.preprocess = clip.load("ViT-B/32", device=self.device)
         self.embedding_vector_size = 512
 
-    def run(self, image: Image) -> list[float]:
+    def run(self, image: Image.Image) -> list[float]:
         image = self.preprocess(image).unsqueeze(0).to(self.device)
         # text = clip.tokenize(["a diagram", "a dog", "a cat"]).to(device)
         with torch.no_grad():

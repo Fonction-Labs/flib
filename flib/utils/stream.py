@@ -1,7 +1,7 @@
 import time
 
 
-async def stream_string(s, chunk_size=10):
+async def stream_string(s: str, chunk_size: int = 10):
     """
     "Fake" string streamer.
     Transforms an already-ready, regular string into
