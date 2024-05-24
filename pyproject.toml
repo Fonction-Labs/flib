@@ -16,11 +16,11 @@ pillow="^10.3.0"
 ollama = "^0.2.0"
 boto3 = "^1.34.94"
 joblib = "^1.4.2"
-#opencv-python = "^4.9.0.80"
 
 # Optional dependencies below
 segment-anything = { version = "^1.0", optional = true }
 segment-anything-fast = { version = "^0.1.2", optional = true }
+opencv-python = { version="^4.9.0.80", optional = true }
 matplotlib = { version = "^3.8.4", optional = true }
 torch = { version = "^2.2.2", optional = true }
 torchvision = { version = "^0.17.2", optional = true }
@@ -31,7 +31,7 @@ mypy = "^1.10.0"
 # Define optional dependencies here
 [tool.poetry.extras]
 extra-clip = ["torch", "torchvision"]
-extra-sam = ["segment-anything", "segment-anything-fast", "matplotlib", "torch", "torchvision"]
+extra-sam = ["segment-anything", "segment-anything-fast", "torch", "torchvision", "opencv-python", "matplotlib"]
 
 [tool.mypy]
 ignore_missing_imports = true
