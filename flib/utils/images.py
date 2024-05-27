@@ -1,5 +1,4 @@
 import os
-import cv2
 import io
 import base64
 from PIL import Image
@@ -15,9 +14,7 @@ def write_file_to_temp_folder(file: io.BytesIO, temp_dir: str) -> str:
     return path
 
 
-def load_image(image_path: str, use_cv2: bool = False) -> (cv2.typing.MatLike | Image.Image):
-    if use_cv2:
-        return cv2.imread(image_path)
+def load_image(image_path: str) -> Image.Image:
     return Image.open(image_path)
 
 

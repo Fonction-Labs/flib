@@ -13,10 +13,13 @@ class LocalFastSAMModel(BaseModel):
         self.device = "mps" if torch.backends.mps.is_available() else "cpu"
 
     def run(self, image: Image.Image) -> Image.Image:
+        # Convert PIL image into opencv
+        converted_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        # Process converted image
         everything_results = self.model(
-            image, device=self.device, retina_masks=True, imgsz=512, conf=0.4, iou=0.9
+            converted_image, device=self.device, retina_masks=True, imgsz=512, conf=0.4, iou=0.9
         )
-        prompt_process = FastSAMPrompt(image, everything_results, device=self.device)
+        prompt_process = FastSAMPrompt(converted_image, everything_results, device=self.device)
         annotations = prompt_process.everything_prompt().detach().cpu().numpy()
         # Sort by area
         annotations = list(annotations)
@@ -76,8 +79,11 @@ class LocalSAMModel(BaseModel):
         # self.sam.to(device=device)
         self.mask_generator = SamAutomaticMaskGenerator(self.sam)
 
-    def run(self, image: cv2.typing.MatLike) -> Image.Image:
-        return self.generate_segmented_image(image)
+    def run(self, image: Image.Image) -> Image.Image:
+        # Convert PIL image into opencv
+        converted_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        # Process
+        return self.generate_segmented_image(converted_image)
 
     def generate_segmented_image(self, image: cv2.typing.MatLike) -> Image.Image:  # cv2 image...
         anns = self.mask_generator.generate(image)
