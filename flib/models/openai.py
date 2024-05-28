@@ -10,6 +10,7 @@ from .base import BaseModel
 MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
     "gpt-3.5-turbo": 4096,
     "gpt-4-turbo": 128000,
+    "gpt-4-o": 128000,
 }
 
 MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE = {
