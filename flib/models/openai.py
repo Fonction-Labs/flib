@@ -24,9 +24,6 @@ class OpenAIGPTModel(BaseModel):
     def __init__(self, model_name: str, api_key: str):
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
-        self.context_window_token_size = MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE[
-            model_name
-        ]
 
     def run(
         self, prompt: str, images: (None | list[Image.Image]) = None, temperature: float = 0.0
