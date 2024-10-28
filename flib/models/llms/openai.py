@@ -1,3 +1,4 @@
+from typing import Optional
 from openai import OpenAI
 from joblib import delayed
 from PIL import Image
@@ -5,14 +6,11 @@ from tqdm import tqdm
 
 from flib.utils.images import encode_image_base64
 from flib.utils.parallel import ParallelTqdm
-from .base import BaseModel
+from ..base import BaseModel
 
 MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
     "gpt-3.5-turbo": 4096,
     "gpt-4-turbo": 128000,
-    "gpt-4o": 128000,
-    "gpt-4o-mini": 128000,
-    "o1-mini": 128000,
 }
 
 MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE = {
@@ -29,29 +27,12 @@ class OpenAIGPTModel(BaseModel):
         ]
 
     def run(
-        self, prompt: str, images: (None | list[Image.Image]) = None, temperature: float = 0.0
-    ) -> (None | str):
-        if images is None:
-            images = []
-        encoded_images = [encode_image_base64(image) for image in images]
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": prompt}]
-                + [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
-                    }
-                    for image in images
-                ],
-            },
-        ]
+        self, messages, temperature: float = 0.0
+    ) -> Optional[str]:
         return (
             self.client.chat.completions.create(
                 model=self.model_name,
-                messages=messages, # type: ignore
+                messages=messages,
                 temperature=temperature,
             )
             .choices[0]
@@ -60,21 +41,19 @@ class OpenAIGPTModel(BaseModel):
 
     def run_batch(
         self,
-        prompts: list[str],
-        list_images: (None | list[(None | list[Image.Image])]) = None,
+        list_messages,
         temperature: float = 0.0,
         parallel: bool = False,
+        n_jobs: int = 8
     ):
-        if list_images is None:
-            list_images = [None] * len(prompts)
         if parallel:
-            return ParallelTqdm(n_jobs=8, prefer="threads", total_tasks=len(prompts))(
-                delayed(self.run)(prompt, images, temperature)
-                for prompt, images in zip(prompts, list_images)
+            return ParallelTqdm(n_jobs=8, prefer="threads", total_tasks=len(list_messages))(
+                delayed(self.run)(message, temperature)
+                for message in list_messages
             )
         return [
-            self.run(prompt, images, temperature)
-            for prompt, images in tqdm(zip(prompts, list_images))
+            self.run(message, temperature)
+            for message in list_messages
         ]
 
 

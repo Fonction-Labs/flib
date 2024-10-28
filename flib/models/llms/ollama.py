@@ -4,7 +4,7 @@ from tqdm import tqdm
 from warnings import warn
 
 from flib.utils.images import encode_image_base64
-from .base import BaseModel
+from ..base import BaseModel
 
 MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
     "mistral": 4096,
@@ -23,27 +23,23 @@ class OllamaModel(BaseModel):
             model_name
         ]
 
-    def run(self, prompt: str, temperature: float = 0.0) -> str:
+    def run(self, messages, temperature: float = 0.0) -> str:
         if temperature != 0:
             warn(
                 "Change of temperature is not handled by OllamaModel models (ollama does not allow so). Temperature is still 0."
             )
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ]
         return ollama.chat(model=self.model_name, messages=messages)["message"][
             "content"
         ]
 
     def run_batch(
-        self, prompts: list[str], temperature: float = 0.0, parallel: bool = False
+        self, list_messages: list[str], temperature: float = 0.0, parallel: bool = False
     ) -> list[str]:
         if parallel:
             warn(
                 "Parallelization is not available for Ollama models. Batch will not be parallelized."
             )
-        return [self.run(prompt, temperature) for prompt in tqdm(prompts)]
+        return [self.run(messages, temperature) for messages in tqdm(list_messages)]
 
 
 class OllamaEmbeddingModel(BaseModel):
