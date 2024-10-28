@@ -10,6 +10,14 @@ import itertools
 from ..base import BaseModel
 
 class BedRockLLMModel(BaseModel):
+    """
+    A model for interacting with Amazon Bedrock's LLMs.
+
+    Attributes:
+        model_name (str): The name of the Bedrock model to use.
+        client: The Bedrock client for making API calls.
+        context_window_token_size (int): The maximum number of tokens the model can handle in a single request.
+    """
     def __init__(self, model_name: str):
         self.model_name = model_name
         self.client = get_bedrock_client()
@@ -18,7 +26,18 @@ class BedRockLLMModel(BaseModel):
     def run(
         self, messages: dict, temperature: float = 0.0, stream: bool = False, json_output: bool = False
     ) -> (Generator[str, str, None] | str):
+        """
+        Runs the model with the provided messages and returns the generated response.
 
+        Args:
+            messages (dict): A dictionary of messages to send to the model.
+            temperature (float): Sampling temperature for randomness in responses.
+            stream (bool): Whether to stream the response.
+            json_output (bool): Whether to return the response in JSON format.
+
+        Returns:
+            (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
+        """
         return get_llm_answer_bedrock(
             messages=messages,
             model_id=self.model_name,
@@ -34,6 +53,18 @@ class BedRockLLMModel(BaseModel):
         parallel: bool = False,
         n_jobs: int = 8
     ):
+        """
+        Runs the model in batch mode with the provided list of messages.
+
+        Args:
+            list_messages (list): A list of message dictionaries to send to the model.
+            temperature (float): Sampling temperature for randomness in responses.
+            parallel (bool): Whether to run the requests in parallel.
+            n_jobs (int): Number of jobs to run in parallel.
+
+        Returns:
+            list: A list of responses from the model.
+        """
         if parallel:
             return ParallelTqdm(n_jobs=n_jobs, prefer="threads", total_tasks=len(list_messages))(
                 delayed(self.run)(messages, temperature)

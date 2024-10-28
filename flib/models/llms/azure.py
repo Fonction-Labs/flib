@@ -15,6 +15,14 @@ from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessa
 from ..base import BaseModel
 
 class AzureOpenaiModel(BaseModel):
+    """
+    A model for interacting with Azure OpenAI's chat completions.
+
+    Attributes:
+        model_name (str): The name of the Azure OpenAI model to use.
+        client (AzureOpenAI): The Azure OpenAI client for making API calls.
+        context_window_token_size (int): The maximum number of tokens the model can handle in a single request.
+    """    
     def __init__(self, model_name: str = "gpt-4o"):
         self.model_name = model_name
         self.client = get_azure_client()
@@ -23,7 +31,18 @@ class AzureOpenaiModel(BaseModel):
     def run(
         self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
     ) -> (Generator[str, str, None] | str):
+        """
+        Runs the model with the provided messages and returns the generated response.
 
+        Args:
+            messages (list): A list of messages to send to the model.
+            temperature (float): Sampling temperature for randomness in responses.
+            stream (bool): Whether to stream the response.
+            json_output (bool): Whether to return the response in JSON format.
+
+        Returns:
+            (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
+        """
 
         if json_output:
             response = self.client.chat.completions.create(
