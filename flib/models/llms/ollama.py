@@ -50,7 +50,7 @@ class OllamaModel(BaseModel):
         ]
 
     def run_batch(
-        self, list_messages: list[str], temperature: float = 0.0, parallel: bool = False
+        self, list_messages: list[dict], temperature: float = 0.0, parallel: bool = False
     ) -> list[str]:
         """
         Runs the model in batch mode with the provided list of messages.
