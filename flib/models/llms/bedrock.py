@@ -9,6 +9,7 @@ from joblib import delayed
 from tqdm import tqdm
 import itertools
 from .base_llm import BaseLLM
+from .utils import clean_json_output
 
 class BedRockLLMModel(BaseLLM):
     """
@@ -81,6 +82,10 @@ def get_llm_answer_bedrock(messages: str, model_id: str, bedrock, temperature: f
             exit(1)
 
         model_response = json.loads(response["body"].read())
+
+        if json_load:
+            return clean_json_output(model_response["choices"][0]["message"]["content"])
+        
         return model_response["choices"][0]["message"]["content"]
 
     else:
