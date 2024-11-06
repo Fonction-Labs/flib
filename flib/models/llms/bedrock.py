@@ -7,9 +7,9 @@ from flib.utils.parallel import ParallelTqdm
 from joblib import delayed
 from tqdm import tqdm
 import itertools
-from ..base import BaseModel
+from .base_llm import BaseLLM
 
-class BedRockLLMModel(BaseModel):
+class BedRockLLMModel(BaseLLM):
     """
     A model for interacting with Amazon Bedrock's LLMs.
 
@@ -41,37 +41,9 @@ class BedRockLLMModel(BaseModel):
             model_id=self.model_name,
             bedrock=self.client,
             temperature=temperature,
-            json_output=json_output
+            json_output=json_output,
+            stream=stream
         )
-
-    def run_batch(
-        self,
-        list_messages,
-        temperature: float = 0.0,
-        parallel: bool = False,
-        n_jobs: int = 8
-    ):
-        """
-        Runs the model in batch mode with the provided list of messages.
-
-        Args:
-            list_messages (list): A list of message dictionaries to send to the model.
-            temperature (float): Sampling temperature for randomness in responses.
-            parallel (bool): Whether to run the requests in parallel.
-            n_jobs (int): Number of jobs to run in parallel.
-
-        Returns:
-            list: A list of responses from the model.
-        """
-        if parallel:
-            return ParallelTqdm(n_jobs=n_jobs, prefer="threads", total_tasks=len(list_messages))(
-                delayed(self.run)(messages, temperature)
-                for messages in list_messages
-            )
-        return [
-            self.run(messages, temperature)
-            for messages in tqdm(list_messages)
-        ]
 
 def get_bedrock_client():
     config = Config(read_timeout=1000)

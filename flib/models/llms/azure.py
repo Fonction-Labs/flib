@@ -12,9 +12,11 @@ from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference.models import ChatCompletionsResponseFormatJSON
 from config import AZURE_OPENAI_ENDPOINT, AZURE_INFERENCE_ENDPOINT
 from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
-from ..base import BaseModel
+from .base_llm import BaseLLM
+from .openai import OpenAIGPTModel
 
-class AzureOpenaiModel(BaseModel):
+
+class AzureOpenaiModel(OpenAIGPTModel):
     """
     A model for interacting with Azure OpenAI's chat completions.
 
@@ -26,55 +28,8 @@ class AzureOpenaiModel(BaseModel):
         self.model_name = model_name
         self.client = get_azure_client()
 
-    def run(
-        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
-    ) -> (Generator[str, str, None] | str):
-        """
-        Runs the model with the provided messages and returns the generated response.
 
-        Args:
-            messages (list): A list of messages to send to the model.
-            temperature (float): Sampling temperature for randomness in responses.
-            stream (bool): Whether to stream the response.
-            json_output (bool): Whether to return the response in JSON format.
-
-        Returns:
-            (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
-        """
-
-        if json_output:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                stream=stream,
-                response_format={ "type": "json_object" },
-            )
-
-        else:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                stream=stream,
-            )
-
-        if not stream:
-            return response.choices[0].message.content
-        else:
-            return parse_stream(response)
-
-
-def get_message_azure(message):
-    match message["role"]:
-        case "system":
-            return SystemMessage(content=messages["content"])
-        case "user":
-            return UserMessage(content=messages["content"])
-        case "assistant":
-            return AssistantMessage(content=messages["content"])
-
-
-
-class AzureInferenceModel:
+class AzureInferenceModel(BaseLLM):
     def __init__(self, model_name):
         self.model_name = model_name
         self.client = get_azure_completion_client()
@@ -103,14 +58,6 @@ class AzureInferenceModel:
         else:
             return parse_stream(response)
 
-
-def get_azure_completion_client():
-    client = ChatCompletionsClient(
-        endpoint=AZURE_INFERENCE_ENDPOINT,
-        credential=AzureKeyCredential(os.environ["AZURE_INFERENCE_CREDENTIAL"]),
-    )
-    return client
-
 def get_azure_client():
     client = AzureOpenAI(
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
@@ -119,10 +66,18 @@ def get_azure_client():
     )
     return client
 
-def parse_stream(stream):
-    for chunk in stream:
-        if len(chunk.choices) > 0:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
-            else:
-                return "\n \n"
+def get_azure_completion_client():
+    client = ChatCompletionsClient(
+        endpoint=AZURE_INFERENCE_ENDPOINT,
+        credential=AzureKeyCredential(os.environ["AZURE_INFERENCE_CREDENTIAL"]),
+    )
+    return client
+
+def get_message_azure(message):
+    match message["role"]:
+        case "system":
+            return SystemMessage(content=messages["content"])
+        case "user":
+            return UserMessage(content=messages["content"])
+        case "assistant":
+            return AssistantMessage(content=messages["content"])

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Generator
 from openai import OpenAI
 from joblib import delayed
 from PIL import Image
@@ -6,9 +6,9 @@ from tqdm import tqdm
 
 from flib.utils.images import encode_image_base64
 from flib.utils.parallel import ParallelTqdm
-from ..base import BaseModel
+from .base_llm import BaseLLM, BaseEmbedding
 
-class OpenAIGPTModel(BaseModel):
+class OpenAIGPTModel(BaseLLM):
     """
     A model for interacting with OpenAI's GPT models.
 
@@ -28,47 +28,43 @@ class OpenAIGPTModel(BaseModel):
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
 
-    def run(self, messages, temperature: float = 0.0) -> Optional[str]:
+    def run(
+        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
+    ) -> (Generator[str, str, None] | str):
         """
         Runs the model with the provided messages and returns the generated response.
 
         Args:
             messages (list): A list of messages to send to the model.
             temperature (float): Sampling temperature for randomness in responses.
+            stream (bool): Whether to stream the response.
+            json_output (bool): Whether to return the response in JSON format.
 
         Returns:
-            Optional[str]: The generated response from the model.
+            (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
         """
-        return (
-            self.client.chat.completions.create(
+
+        if json_output:
+            response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=messages,
-                temperature=temperature,
+                stream=stream,
+                response_format={ "type": "json_object" },
             )
-            .choices[0]
-            .message.content
-        )
 
-    def run_batch(self, list_messages, temperature: float = 0.0, parallel: bool = False, n_jobs: int = 8):
-        """
-        Runs the model in batch mode with the provided list of messages.
-
-        Args:
-            list_messages (list): A list of message lists to send to the model.
-            temperature (float): Sampling temperature for randomness in responses.
-            parallel (bool): Whether to run the requests in parallel.
-            n_jobs (int): Number of jobs to run in parallel.
-
-        Returns:
-            list: A list of responses from the model.
-        """
-        if parallel:
-            return ParallelTqdm(n_jobs=n_jobs, prefer="threads", total_tasks=len(list_messages))(
-                delayed(self.run)(message, temperature) for message in list_messages
+        else:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                stream=stream,
             )
-        return [self.run(message, temperature) for message in list_messages]
 
-class OpenAIEmbeddingModel(BaseModel):
+        if not stream:
+            return response.choices[0].message.content
+        else:
+            return parse_stream(response)
+
+class OpenAIEmbeddingModel(BaseEmbedding):
     """
     A model for generating embeddings using OpenAI's embedding models.
 
@@ -104,19 +100,10 @@ class OpenAIEmbeddingModel(BaseModel):
             .embedding
         )
 
-    def run_batch(self, prompts: list[str], parallel: bool = False) -> list[list[float]]:
-        """
-        Generates embeddings for a batch of prompts.
-
-        Args:
-            prompts (list[str]): A list of prompts to generate embeddings for.
-            parallel (bool): Whether to run the requests in parallel.
-
-        Returns:
-            list[list[float]]: A list of generated embedding vectors.
-        """
-        if parallel:
-            return ParallelTqdm(n_jobs=8, prefer="threads", total_tasks=len(prompts))(
-                delayed(self.run)(prompt) for prompt in prompts
-            )
-        return [self.run(prompt) for prompt in tqdm(prompts)]
+def parse_stream(stream):
+    for chunk in stream:
+        if len(chunk.choices) > 0:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+            else:
+                return "\n \n"
