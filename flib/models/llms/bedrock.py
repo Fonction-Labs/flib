@@ -2,6 +2,7 @@ import boto3
 from botocore.config import Config
 import json
 from typing import Generator
+from warning import warn
 from botocore.exceptions import ClientError
 from flib.utils.parallel import ParallelTqdm
 from joblib import delayed
@@ -68,8 +69,7 @@ def get_llm_answer_bedrock(messages: str, model_id: str, bedrock, temperature: f
         'messages': messages
     }
     if json_output:
-        raise Warning("Json output not available for Bedrock Models")
-        pass
+        warn("Json output not available for Bedrock Models")
 
     request = json.dumps(native_request)
 
