@@ -10,7 +10,6 @@ from openai import AzureOpenAI
 from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference.models import ChatCompletionsResponseFormatJSON
-from config import AZURE_OPENAI_ENDPOINT, AZURE_INFERENCE_ENDPOINT
 from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
 from .base_llm import BaseLLM
 from .openai import OpenAIGPTModel
