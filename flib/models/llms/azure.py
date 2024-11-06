@@ -24,15 +24,15 @@ class AzureOpenaiModel(OpenAIGPTModel):
         model_name (str): The name of the Azure OpenAI model to use.
         client (AzureOpenAI): The Azure OpenAI client for making API calls.
     """
-    def __init__(self, model_name: str = "gpt-4o"):
+    def __init__(self, endpoint: str, model_name: str = "gpt-4o"):
         self.model_name = model_name
-        self.client = get_azure_client()
+        self.client = get_azure_client(endpoint)
 
 
 class AzureInferenceModel(BaseLLM):
-    def __init__(self, model_name):
+    def __init__(self, endpoint: str, model_name: str):
         self.model_name = model_name
-        self.client = get_azure_completion_client()
+        self.client = get_azure_completion_client(endpoint)
 
     def run(
         self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
@@ -58,17 +58,17 @@ class AzureInferenceModel(BaseLLM):
         else:
             return parse_stream(response)
 
-def get_azure_client():
+def get_azure_client(endpoint):
     client = AzureOpenAI(
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
         api_version='2024-06-01',
-        azure_endpoint=AZURE_OPENAI_ENDPOINT
+        azure_endpoint=endpoint
     )
     return client
 
-def get_azure_completion_client():
+def get_azure_completion_client(endpoint):
     client = ChatCompletionsClient(
-        endpoint=AZURE_INFERENCE_ENDPOINT,
+        endpoint=endpoint,
         credential=AzureKeyCredential(os.environ["AZURE_INFERENCE_CREDENTIAL"]),
     )
     return client
