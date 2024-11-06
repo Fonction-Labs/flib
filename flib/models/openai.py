@@ -7,18 +7,6 @@ from flib.utils.images import encode_image_base64
 from flib.utils.parallel import ParallelTqdm
 from .base import BaseModel
 
-MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
-    "gpt-3.5-turbo": 4096,
-    "gpt-4-turbo": 128000,
-    "gpt-4o": 128000,
-    "gpt-4o-mini": 128000,
-    "o1-mini": 128000,
-}
-
-MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE = {
-    "text-embedding-3-small": 1536,
-}
-
 
 class OpenAIGPTModel(BaseModel):
     def __init__(self, model_name: str, api_key: str):
