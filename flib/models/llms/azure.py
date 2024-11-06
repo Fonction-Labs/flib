@@ -21,12 +21,10 @@ class AzureOpenaiModel(BaseModel):
     Attributes:
         model_name (str): The name of the Azure OpenAI model to use.
         client (AzureOpenAI): The Azure OpenAI client for making API calls.
-        context_window_token_size (int): The maximum number of tokens the model can handle in a single request.
-    """    
+    """
     def __init__(self, model_name: str = "gpt-4o"):
         self.model_name = model_name
         self.client = get_azure_client()
-        self.context_window_token_size = 1024
 
     def run(
         self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
@@ -80,7 +78,6 @@ class AzureInferenceModel:
     def __init__(self, model_name):
         self.model_name = model_name
         self.client = get_azure_completion_client()
-        self.context_window_token_size = 1024
 
     def run(
         self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False

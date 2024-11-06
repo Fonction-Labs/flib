@@ -16,12 +16,10 @@ class BedRockLLMModel(BaseModel):
     Attributes:
         model_name (str): The name of the Bedrock model to use.
         client: The Bedrock client for making API calls.
-        context_window_token_size (int): The maximum number of tokens the model can handle in a single request.
     """
     def __init__(self, model_name: str):
         self.model_name = model_name
         self.client = get_bedrock_client()
-        self.context_window_token_size = 1024 # TODO get the context window
 
     def run(
         self, messages: dict, temperature: float = 0.0, stream: bool = False, json_output: bool = False
@@ -112,7 +110,7 @@ def get_llm_answer_bedrock(messages: str, model_id: str, bedrock, temperature: f
 
         model_response = json.loads(response["body"].read())
         return model_response["choices"][0]["message"]["content"]
-    
+
     else:
         try:
             streaming_response = bedrock.invoke_model_with_response_stream(
