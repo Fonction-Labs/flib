@@ -6,15 +6,6 @@ from warnings import warn
 from flib.utils.images import encode_image_base64
 from ..base import BaseModel
 
-MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
-    "mistral": 4096,
-}
-
-MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE = {
-    "mistral": 4096,
-}
-
-
 class OllamaModel(BaseModel):
     """
     A model for interacting with Ollama's chat models.
@@ -26,9 +17,6 @@ class OllamaModel(BaseModel):
     def __init__(self, model_name: str):
         ollama.pull(model_name)
         self.model_name = model_name
-        self.context_window_token_size = MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE[
-            model_name
-        ]
 
     def run(self, messages, temperature: float = 0.0) -> str:
         """
@@ -74,7 +62,6 @@ class OllamaEmbeddingModel(BaseModel):
     def __init__(self, model_name: str):
         ollama.pull(model_name)
         self.model_name = model_name
-        self.embedding_vector_size = MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE[model_name]
 
     def run(self, prompt: str) -> list[float]:
         return ollama.embeddings(model=self.model_name, prompt=prompt)["embedding"]
