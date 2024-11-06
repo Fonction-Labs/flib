@@ -8,7 +8,7 @@ def clean_json_output(llm_output):
     json_regex = re.compile(r'```json(.*?)```', re.DOTALL)
     match = json_regex.search(llm_output)
     if not match:
-        raise ValueError("No JSON found in the provided string.")
+        return llm_output
     json_str = match.group(1).strip()
     
     try:
