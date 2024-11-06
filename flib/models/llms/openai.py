@@ -8,15 +8,6 @@ from flib.utils.images import encode_image_base64
 from flib.utils.parallel import ParallelTqdm
 from ..base import BaseModel
 
-MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE = {
-    "gpt-3.5-turbo": 4096,
-    "gpt-4-turbo": 128000,
-}
-
-MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE = {
-    "text-embedding-3-small": 1536,
-}
-
 class OpenAIGPTModel(BaseModel):
     """
     A model for interacting with OpenAI's GPT models.
@@ -24,7 +15,6 @@ class OpenAIGPTModel(BaseModel):
     Attributes:
         model_name (str): The name of the OpenAI model to use.
         client (OpenAI): The OpenAI client for making API calls.
-        context_window_token_size (int): The maximum number of tokens the model can handle in a single request.
     """
 
     def __init__(self, model_name: str, api_key: str):
@@ -37,7 +27,6 @@ class OpenAIGPTModel(BaseModel):
         """
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
-        self.context_window_token_size = MODEL_NAME_TO_CONTEXT_WINDOW_TOKEN_SIZE[model_name]
 
     def run(self, messages, temperature: float = 0.0) -> Optional[str]:
         """
@@ -86,7 +75,6 @@ class OpenAIEmbeddingModel(BaseModel):
     Attributes:
         model_name (str): The name of the OpenAI embedding model to use.
         client (OpenAI): The OpenAI client for making API calls.
-        embedding_vector_size (int): The size of the embedding vector produced by the model.
     """
 
     def __init__(self, model_name: str, api_key: str):
@@ -99,7 +87,6 @@ class OpenAIEmbeddingModel(BaseModel):
         """
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
-        self.embedding_vector_size = MODEL_NAME_TO_EMBEDDING_VECTOR_SIZE[model_name]
 
     def run(self, prompt: str) -> list[float]:
         """
