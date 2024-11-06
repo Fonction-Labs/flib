@@ -2,7 +2,7 @@ import boto3
 from botocore.config import Config
 import json
 from typing import Generator
-from warning import warn
+from warnings import warn
 from botocore.exceptions import ClientError
 from flib.utils.parallel import ParallelTqdm
 from joblib import delayed
