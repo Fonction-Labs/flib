@@ -29,6 +29,7 @@ torchvision = { version = "^0.17.2", optional = true }
 mypy = "^1.10.0"
 
 # Define optional dependencies here
+pytest = "^8.3.3"
 [tool.poetry.extras]
 extra-clip = ["torch", "torchvision"]
 extra-sam = ["segment-anything", "segment-anything-fast", "torch", "torchvision", "opencv-python", "matplotlib"]
