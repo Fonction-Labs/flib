@@ -83,7 +83,7 @@ def get_llm_answer_bedrock(messages: str, model_id: str, bedrock, temperature: f
 
         model_response = json.loads(response["body"].read())
 
-        if json_load:
+        if json_output:
             return clean_json_output(model_response["choices"][0]["message"]["content"])
         
         return model_response["choices"][0]["message"]["content"]
