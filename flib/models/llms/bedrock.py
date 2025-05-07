@@ -24,7 +24,7 @@ class BedRockLLMModel(BaseLLM):
         self.client = get_bedrock_client()
 
     def run(
-        self, messages: dict, temperature: float = 0.0, stream: bool = False, json_output: bool = False
+        self, messages: dict, system: str = None, temperature: float = 0.0, stream: bool = False, json_output: bool = False
     ) -> (Generator[str, str, None] | str):
         """
         Runs the model with the provided messages and returns the generated response.
@@ -42,6 +42,7 @@ class BedRockLLMModel(BaseLLM):
             messages=messages,
             model_id=self.model_name,
             client=self.client,
+            system=system,
             temperature=temperature,
             json_output=json_output,
             stream=stream
@@ -67,19 +68,19 @@ def get_embeddings_bedrock(prompt: str, model_id: str, client):
     except (ClientError, Exception) as e:
         print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
         exit(1)
-        
+
 
 # Default temp is 1 on Bedrock ?
-def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: float = 1.0, json_output: bool = False, stream: bool = False) -> str:
-    native_request = {
-        'messages': messages
-    }
+def get_llm_answer_bedrock(messages: str, model_id: str, client, system: str = None, temperature: float = 1.0, json_output: bool = False, stream: bool = False) -> str:
     
     native_request = { "messages": messages, 
                        "max_tokens": 1000, 
                        "anthropic_version":
                        "bedrock-2023-05-31", 
                        "temperature": temperature } 
+                       
+    if system is not None:
+        native_request["system"] = system
 
     if json_output:
         warn("Json output not available for Bedrock Models")
