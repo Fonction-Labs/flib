@@ -24,6 +24,7 @@ opencv-python = { version="^4.9.0.80", optional = true }
 matplotlib = { version = "^3.8.4", optional = true }
 torch = { version = "^2.2.2", optional = true }
 torchvision = { version = "^0.17.2", optional = true }
+azure-ai-inference = "^1.0.0b9"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.10.0"
