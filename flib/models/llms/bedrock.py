@@ -52,8 +52,11 @@ def get_bedrock_client():
     config = Config(read_timeout=1000)
     return boto3.client(service_name="bedrock-runtime", config=config)
 
-def get_embeddings_bedrock(prompt: str, model_id: str, client):
-    json_request = {"inputText": prompt}
+def get_embeddings_bedrock(prompts: list[str], model_id: str, client, input_type: str = "search_document"):
+    # input_type can be [search_document, search_query, classification, clustering]
+    
+    # json_request = {"inputText": prompt}
+    json_request = {"texts": prompts, "input_type": input_type, "truncate": "END"}
     body = json.dumps(json_request)
 
     try:
@@ -62,8 +65,8 @@ def get_embeddings_bedrock(prompt: str, model_id: str, client):
                                         accept='application/json',
                                         contentType='application/json')
         response_body = response.get('body').read()
-        embedding = json.loads(response_body)['embedding']
-        return embedding
+        embeddings = json.loads(response_body)['embeddings']
+        return embeddings
 
     except (ClientError, Exception) as e:
         print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
@@ -78,7 +81,7 @@ def get_llm_answer_bedrock(messages: str, model_id: str, client, system: str = N
                        "anthropic_version":
                        "bedrock-2023-05-31", 
                        "temperature": temperature } 
-                       
+
     if system is not None:
         native_request["system"] = system
 
