@@ -9,13 +9,12 @@ import itertools
 from openai import AzureOpenAI
 from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
-from azure.ai.inference.models import ChatCompletionsResponseFormatJSON
 from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
 from .base_llm import BaseLLM
 from .openai import OpenAIGPTModel
 
 
-class AzureOpenaiModel(OpenAIGPTModel):
+class AzureOpenAIModel(OpenAIGPTModel):
     """
     A model for interacting with Azure OpenAI's chat completions.
 
@@ -42,7 +41,7 @@ class AzureInferenceModel(BaseLLM):
                 messages=list(map(get_message_azure, messages)),
                 temperature=temperature,
                 stream=stream,
-                response_format=ChatCompletionsResponseFormatJSON()
+                response_format={ "type": "json_object" },
             )
 
         else:
@@ -60,7 +59,7 @@ class AzureInferenceModel(BaseLLM):
 def get_azure_client(endpoint):
     client = AzureOpenAI(
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-        api_version='2024-06-01',
+        api_version="2025-03-01-preview",
         azure_endpoint=endpoint
     )
     return client
