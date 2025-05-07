@@ -71,6 +71,14 @@ def get_azure_completion_client(endpoint):
     )
     return client
 
+def get_embeddings_azure(prompts: list[str], model_id: str, client):
+    response = client.embeddings.create(
+        input=prompts,
+        model=model_id
+    )
+    embeddings = [item.embedding for item in response.data]
+    return embeddings
+
 def get_message_azure(message):
     match message["role"]:
         case "system":
