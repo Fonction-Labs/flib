@@ -24,7 +24,7 @@ class BedRockLLMModel(BaseLLM):
         self.client = get_bedrock_client()
 
     def run(
-        self, messages: dict, system: str = None, temperature: float = 0.0, stream: bool = False, json_output: bool = False
+        self, messages: dict, temperature: float = 0.0, stream: bool = False, json_output: bool = False
     ) -> (Generator[str, str, None] | str):
         """
         Runs the model with the provided messages and returns the generated response.
@@ -42,7 +42,6 @@ class BedRockLLMModel(BaseLLM):
             messages=messages,
             model_id=self.model_name,
             client=self.client,
-            system=system,
             temperature=temperature,
             json_output=json_output,
             stream=stream
@@ -54,7 +53,7 @@ def get_bedrock_client():
 
 def get_embeddings_bedrock(prompts: list[str], model_id: str, client, input_type: str = "search_document"):
     # input_type can be [search_document, search_query, classification, clustering]
-    
+
     # json_request = {"inputText": prompt}
     json_request = {"texts": prompts, "input_type": input_type, "truncate": "END"}
     body = json.dumps(json_request)
@@ -74,15 +73,22 @@ def get_embeddings_bedrock(prompts: list[str], model_id: str, client, input_type
 
 
 # Default temp is 1 on Bedrock ?
-def get_llm_answer_bedrock(messages: str, model_id: str, client, system: str = None, temperature: float = 1.0, json_output: bool = False, stream: bool = False) -> str:
+def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: float = 1.0, json_output: bool = False, stream: bool = False) -> str:
     
+    system_messages = [m for m in messages if m["role"] == "system"]
+    system_message = None
+    if len(system_messages) > 0:
+        system_message = system_messages[0]
+
+    messages = [m for m in messages if m["role"] != "system"]
+
     native_request = { "messages": messages, 
                        "max_tokens": 1000, 
                        "anthropic_version":
                        "bedrock-2023-05-31", 
                        "temperature": temperature } 
 
-    if system is not None:
+    if system_message is not None:
         native_request["system"] = system
 
     if json_output:
