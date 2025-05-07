@@ -79,13 +79,13 @@ def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: fl
     messages = [m for m in messages if m["role"] != "system"]
 
     native_request = { "messages": messages, 
-                       "max_tokens": 1000, 
+                       "max_tokens": 1000, # TODO: handle max_tokens
                        "anthropic_version":
                        "bedrock-2023-05-31", 
                        "temperature": temperature } 
 
     if len(system_messages) > 0:
-        native_request["system"] = system_messages[0]
+        native_request["system"] = system_messages[0]["content"]
 
     if json_output:
         warn("Json output not available for Bedrock Models")
