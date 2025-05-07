@@ -41,7 +41,7 @@ class BedRockLLMModel(BaseLLM):
         return get_llm_answer_bedrock(
             messages=messages,
             model_id=self.model_name,
-            bedrock=self.client,
+            client=self.client,
             temperature=temperature,
             json_output=json_output,
             stream=stream
@@ -51,24 +51,36 @@ def get_bedrock_client():
     config = Config(read_timeout=1000)
     return boto3.client(service_name="bedrock-runtime", config=config)
 
-def get_embeddings_bedrock(prompt: str, model_id: str, bedrock):
+def get_embeddings_bedrock(prompt: str, model_id: str, client):
     json_request = {"inputText": prompt}
     body = json.dumps(json_request)
 
     try:
-        response = bedrock.invoke_model(body=body, modelId=model_id)
+        response = client.invoke_model(body=body, 
+                                        modelId=model_id,
+                                        accept='application/json',
+                                        contentType='application/json')
         response_body = response.get('body').read()
         embedding = json.loads(response_body)['embedding']
         return embedding
+
     except (ClientError, Exception) as e:
         print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
         exit(1)
+        
 
-
-def get_llm_answer_bedrock(messages: str, model_id: str, bedrock, temperature: float = 0.0, json_output: bool = False, stream: bool = False) -> str:
+# Default temp is 1 on Bedrock ?
+def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: float = 1.0, json_output: bool = False, stream: bool = False) -> str:
     native_request = {
         'messages': messages
     }
+    
+    native_request = { "messages": messages, 
+                       "max_tokens": 1000, 
+                       "anthropic_version":
+                       "bedrock-2023-05-31", 
+                       "temperature": temperature } 
+
     if json_output:
         warn("Json output not available for Bedrock Models")
 
@@ -76,7 +88,7 @@ def get_llm_answer_bedrock(messages: str, model_id: str, bedrock, temperature: f
 
     if not stream:
         try:
-            response = bedrock.invoke_model(modelId=model_id, body=request)
+            response = client.invoke_model(modelId=model_id, body=request)
         except (ClientError, Exception) as e:
             print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
             exit(1)
@@ -84,13 +96,13 @@ def get_llm_answer_bedrock(messages: str, model_id: str, bedrock, temperature: f
         model_response = json.loads(response["body"].read())
 
         if json_output:
-            return clean_json_output(model_response["choices"][0]["message"]["content"])
+            return clean_json_output(model_response["content"][0]["text"])
         
-        return model_response["choices"][0]["message"]["content"]
+        return model_response["content"][0]["text"]
 
     else:
         try:
-            streaming_response = bedrock.invoke_model_with_response_stream(
+            streaming_response = client.invoke_model_with_response_stream(
                 modelId=model_id, body=request
             )
 
