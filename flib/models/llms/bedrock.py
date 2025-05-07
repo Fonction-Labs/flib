@@ -76,10 +76,6 @@ def get_embeddings_bedrock(prompts: list[str], model_id: str, client, input_type
 def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: float = 1.0, json_output: bool = False, stream: bool = False) -> str:
     
     system_messages = [m for m in messages if m["role"] == "system"]
-    system_message = None
-    if len(system_messages) > 0:
-        system_message = system_messages[0]
-
     messages = [m for m in messages if m["role"] != "system"]
 
     native_request = { "messages": messages, 
@@ -88,8 +84,8 @@ def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: fl
                        "bedrock-2023-05-31", 
                        "temperature": temperature } 
 
-    if system_message is not None:
-        native_request["system"] = system
+    if len(system_messages) > 0:
+        native_request["system"] = system_messages[0]
 
     if json_output:
         warn("Json output not available for Bedrock Models")
