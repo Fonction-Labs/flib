@@ -1,7 +1,8 @@
 import boto3
 from botocore.config import Config
 import json
-from typing import Generator
+from typing import Generator, Optional, Type
+from pydantic import BaseModel
 from warnings import warn
 from botocore.exceptions import ClientError
 from flib.utils.parallel import ParallelTqdm
@@ -24,7 +25,7 @@ class BedRockLLMModel(BaseLLM):
         self.client = get_bedrock_client()
 
     def run(
-        self, messages: dict, temperature: float = 0.0, stream: bool = False, json_output: bool = False
+        self, messages: dict, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
     ) -> (Generator[str, str, None] | str):
         """
         Runs the model with the provided messages and returns the generated response.
@@ -38,13 +39,15 @@ class BedRockLLMModel(BaseLLM):
         Returns:
             (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
         """
+        if text_format is not None:
+            raise ValueError("Text format is not yet supported for Bedrock wrapper")
         return get_llm_answer_bedrock(
             messages=messages,
             model_id=self.model_name,
             client=self.client,
             temperature=temperature,
             json_output=json_output,
-            stream=stream
+            stream=stream,
         )
 
 def get_bedrock_client():
@@ -129,3 +132,38 @@ def parse_stream(stream):
 
         if chunk.get("stop_reason"):
             return "\n \n"
+
+from typing import Optional, Type, Dict, Any
+from pydantic import BaseModel
+
+def convert_pydantic_to_bedrock_tool(
+    model: Type[BaseModel],
+    description: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Converts a Pydantic model to a tool description for the Amazon Bedrock Converse API.
+    
+    Args:
+        model: The Pydantic model class to convert
+        description: Optional description of the tool's purpose
+
+    Returns:
+        Dict containing the Bedrock tool specification
+
+    source: https://freedium.cfd/https://medium.com/@dminhk/structured-output-with-amazon-bedrock-converse-api-4e85d1f602c4
+    """
+    # Validate input model
+    if not isinstance(model, type) or not issubclass(model, BaseModel):
+        raise ValueError("Input must be a Pydantic model class")
+    
+    name = model.__name__
+    input_schema = model.model_json_schema()
+    tool = {
+        'toolSpec': {
+            'name': name,
+            'description': description or f"{name} Tool",
+            'inputSchema': {'json': input_schema }
+        }
+    }
+    return tool
+

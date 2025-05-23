@@ -1,8 +1,9 @@
-from typing import Generator
+from typing import Generator, Optional
 import ollama
 from PIL import Image
 from tqdm import tqdm
 from warnings import warn
+from pydantic import BaseModel
 
 from flib.utils.images import encode_image_base64
 from .base_llm import BaseLLM, BaseEmbedding
@@ -19,7 +20,7 @@ class OllamaModel(BaseLLM):
         ollama.pull(model_name)
         self.model_name = model_name
 
-    def run(self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False) -> str:
+    def run(self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None) -> str:
         """
         Runs the model with the provided messages and returns the generated response.
 
@@ -30,6 +31,8 @@ class OllamaModel(BaseLLM):
         Returns:
             str: The generated response from the model.
         """
+        if text_format:
+            raise ValueError("Text format is not implemented yet for OllamaModel")
         if temperature != 0:
             warn(
                 "Change of temperature is not handled by OllamaModel models (ollama does not allow so). Temperature is still 0."

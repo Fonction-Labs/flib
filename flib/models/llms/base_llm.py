@@ -1,17 +1,16 @@
 import abc
-from typing import Generator
+from typing import Generator, Optional, Type
+from pydantic import BaseModel
 
-from ..base import BaseModel
-
-class BaseLLM(BaseModel):
+class BaseLLM(abc.ABC):
 
     @abc.abstractmethod
     def run(
-        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
+        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[BaseModel] = None
     ) -> (Generator[str, str, None] | str):
         pass
 
-    def run_batch(self, list_messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, parallel: bool = False, n_jobs: int = 8):
+    def run_batch(self, list_messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[BaseModel] = None, parallel: bool = False, n_jobs: int = 8):
         """
         Runs the model in batch mode with the provided list of messages.
 
@@ -30,7 +29,7 @@ class BaseLLM(BaseModel):
             )
         return [self.run(message, temperature) for message in list_messages]
 
-class BaseEmbedding(BaseModel):
+class BaseEmbedding(abc.ABC):
 
     @abc.abstractmethod
     def run(self, prompt: str) -> list[float]:

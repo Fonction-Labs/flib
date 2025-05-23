@@ -1,6 +1,7 @@
 import os
 import json
-from typing import Generator
+from typing import Generator, Optional, Type
+from pydantic import BaseModel
 from botocore.exceptions import ClientError
 from flib.utils.parallel import ParallelTqdm
 from joblib import delayed
@@ -12,6 +13,7 @@ from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
 from .base_llm import BaseLLM
 from .openai import OpenAIGPTModel
+from .utils import JSON
 
 
 class AzureOpenAIModel(OpenAIGPTModel):
@@ -33,23 +35,27 @@ class AzureInferenceModel(BaseLLM):
         self.client = get_azure_completion_client(endpoint)
 
     def run(
-        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
+        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
     ) -> (Generator[str, str, None] | str):
 
+        args = {
+            "messages": list(map(get_message_azure, messages)),
+            "temperature": temperature,
+            "stream": stream
+        }
+
         if json_output:
-            response = self.client.complete(
-                messages=list(map(get_message_azure, messages)),
-                temperature=temperature,
-                stream=stream,
-                response_format={ "type": "json_object" },
+            args["response_format"] = { "type": "json_object" }
+        if text_format: # It will overcharge json output if precised
+            args["response_format"] = JsonSchemaFormat(
+                name=text_format.__name__,
+                schema=text_format.model_json_schema(),
+                description="Describe the output",
+                strict=True,
             )
 
-        else:
-            response = self.client.complete(
-                messages=list(map(get_message_azure, messages)),
-                temperature=temperature,
-                stream=stream,
-            )
+        response = self.client.complete(**args)
+
 
         if not stream:
             return response.choices[0].message.content

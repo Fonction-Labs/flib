@@ -1,8 +1,9 @@
-from typing import Optional, Generator
+from typing import Optional, Generator, Type
 from openai import OpenAI
 from joblib import delayed
 from PIL import Image
 from tqdm import tqdm
+from pydantic import BaseModel
 
 from flib.utils.images import encode_image_base64
 from flib.utils.parallel import ParallelTqdm
@@ -29,7 +30,7 @@ class OpenAIGPTModel(BaseLLM):
         self.client = OpenAI(api_key=api_key)
 
     def run(
-        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False
+        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
     ) -> (Generator[str, str, None] | str):
         """
         Runs the model with the provided messages and returns the generated response.
@@ -44,23 +45,23 @@ class OpenAIGPTModel(BaseLLM):
             (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
         """
 
-        if json_output:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                stream=stream,
-                response_format={ "type": "json_object" },
-            )
+        args = {
+            "model": self.model_name,
+            "input": messages,
+            "temperature": temperature,
+            "stream": stream
+        }
 
+        if json_output:
+            args["response_format"] = { "type": "json_object" }
+        if text_format:
+            args["text_format"] = text_format
+            response = self.client.responses.parse(**args)
         else:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                stream=stream,
-            )
+            response = self.client.responses.create(**args)
 
         if not stream:
-            return response.choices[0].message.content
+            return response.output_text
         else:
             return parse_stream(response)
 
