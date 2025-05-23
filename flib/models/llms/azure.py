@@ -60,7 +60,7 @@ class AzureOpenAIModel(OpenAIGPTModel):
         else:
             output = response.choices[0].message.content
             if text_format:
-                return text_format.parse_raw(output)
+                return response.choices[0].message.tool_calls[0].function
             return output
 
 class AzureInferenceModel(BaseLLM):
