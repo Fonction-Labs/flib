@@ -13,7 +13,6 @@ from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
 from .base_llm import BaseLLM
 from .openai import OpenAIGPTModel
-from .utils import JSON
 
 
 class AzureOpenAIModel(OpenAIGPTModel):
