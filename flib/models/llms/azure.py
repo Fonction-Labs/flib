@@ -7,7 +7,7 @@ from flib.utils.parallel import ParallelTqdm
 from joblib import delayed
 from tqdm import tqdm
 import itertools
-from openai import AzureOpenAI
+from openai import AzureOpenAI, pydantic_function_tool
 from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference.models import SystemMessage, UserMessage, AssistantMessage
@@ -44,10 +44,8 @@ class AzureOpenAIModel(OpenAIGPTModel):
         }
 
         if text_format:
-            args["response_format"] = {
-                "type": "json_schema",
-                "schema": text_format.model_json_schema()
-            }
+            tools = [pydantic_function_tool(text_format)]
+            args["tools"] = tools
         elif json_output:
             args["response_format"] = { "type": "json_object" }
 
