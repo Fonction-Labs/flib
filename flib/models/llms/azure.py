@@ -49,7 +49,7 @@ class AzureOpenAIModel(OpenAIGPTModel):
                 "schema": text_format.model_json_schema()
             }
         elif json_output:
-            args["response_format"] = "json_object"
+            args["response_format"] = { "type": "json_object" }
 
         response = self.client.chat.completions.create(**args)
 
