@@ -27,6 +27,43 @@ class AzureOpenAIModel(OpenAIGPTModel):
         self.model_name = model_name
         self.client = get_azure_client(endpoint)
 
+    def run(
+        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
+    ) -> (Generator[str, str, None] | str):
+        """
+        Runs the model with the provided messages and returns the generated response.
+
+        Args:
+            messages (list): A list of messages to send to the model.
+            temperature (float): Sampling temperature for randomness in responses.
+            stream (bool): Whether to stream the response.
+            json_output (bool): Whether to return the response in JSON format.
+
+        Returns:
+            (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
+        """
+
+        args = {
+            "model": self.model_name,
+            "messages": messages,
+            "temperature": temperature,
+            "stream": stream
+        }
+
+        if json_output:
+            args["response_format"] = { "type": "json_object" }
+        if text_format:
+            args["response_format"] = text_format
+            return self.client.beta.chat.completions.parse(**args).choices[0].message.parsed
+
+        else:
+            response = self.client.responses.create(**args)
+
+        if not stream:
+            return response.output_text
+        else:
+            return parse_stream(response)
+
 
 class AzureInferenceModel(BaseLLM):
     def __init__(self, endpoint: str, model_name: str):
