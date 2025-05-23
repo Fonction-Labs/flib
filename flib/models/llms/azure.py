@@ -28,49 +28,42 @@ class AzureOpenAIModel(OpenAIGPTModel):
         self.client = get_azure_client(endpoint)
 
     def run(
-        self, messages, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
-    ) -> (Generator[str, str, None] | str):
-        """
-        Runs the model with the provided messages and returns the generated response.
+        self,
+        messages,
+        temperature: float = 0.0,
+        stream: bool = False,
+        json_output: bool = False,
+        text_format: Optional[Type[BaseModel]] = None
+    ) -> (Generator[str, None, None] | str):
 
-        Args:
-            messages (list): A list of messages to send to the model.
-            temperature (float): Sampling temperature for randomness in responses.
-            stream (bool): Whether to stream the response.
-            json_output (bool): Whether to return the response in JSON format.
-
-        Returns:
-            (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
-        """
+        args = {
+            "model": self.model_name,
+            "messages": messages,
+            "temperature": temperature,
+            "stream": stream,
+        }
 
         if text_format:
-            args = {
-                "model": self.model_name,
-                "messages": messages,
-                "temperature": temperature,
-                "stream": stream,
-                "response_format": text_format
+            args["response_format"] = {
+                "type": "json_schema",
+                "schema": text_format.model_json_schema()
             }
-            return self.client.beta.chat.completions.parse(**args).choices[0].message.parsed
-        else:
-            args = {
-                "model": self.model_name,
-                "input": messages,
-                "temperature": temperature,
-                "stream": stream
-            }
+        elif json_output:
+            args["response_format"] = "json_object"
 
-            if json_output:
-                args["response_format"] = { "type": "json_object" }
+        response = self.client.chat.completions.create(**args)
 
-            response = self.client.responses.create(**args)
-
-        if not stream:
-            return response.output_text
-
-        else:
+        if stream:
+            def parse_stream(resp):
+                for chunk in resp:
+                    if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                        yield chunk.choices[0].delta.content
             return parse_stream(response)
-
+        else:
+            output = response.choices[0].message.content
+            if text_format:
+                return text_format.parse_raw(output)
+            return output
 
 class AzureInferenceModel(BaseLLM):
     def __init__(self, endpoint: str, model_name: str):
