@@ -43,24 +43,31 @@ class AzureOpenAIModel(OpenAIGPTModel):
             (Generator[str, str, None] | str): The generated response from the model, either as a string or a generator.
         """
 
-        args = {
-            "model": self.model_name,
-            "messages": messages,
-            "temperature": temperature,
-            "stream": stream
-        }
-
-        if json_output:
-            args["response_format"] = { "type": "json_object" }
         if text_format:
-            args["response_format"] = text_format
+            args = {
+                "model": self.model_name,
+                "messages": messages,
+                "temperature": temperature,
+                "stream": stream,
+                "response_format": text_format
+            }
             return self.client.beta.chat.completions.parse(**args).choices[0].message.parsed
-
         else:
+            args = {
+                "model": self.model_name,
+                "input": messages,
+                "temperature": temperature,
+                "stream": stream
+            }
+
+            if json_output:
+                args["response_format"] = { "type": "json_object" }
+
             response = self.client.responses.create(**args)
 
         if not stream:
             return response.output_text
+
         else:
             return parse_stream(response)
 
