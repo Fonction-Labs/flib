@@ -40,28 +40,34 @@ class AzureOpenAIModel(OpenAIGPTModel):
             "model": self.model_name,
             "messages": messages,
             "temperature": temperature,
-            "stream": stream,
         }
 
         if text_format:
-            tools = [pydantic_function_tool(text_format)]
-            args["tools"] = tools
-        elif json_output:
-            args["response_format"] = { "type": "json_object" }
+            # tools = [pydantic_function_tool(text_format)]
+            if stream:
+                raise ValueError("Stream is not implemented for AzureOpenAI with text format")
+            args["response_format"] = text_format
+            completion = self.client.beta.chat.completions.parse(**args)
+            return completion.choices[0].message.parsed
 
-        response = self.client.chat.completions.create(**args)
-
-        if stream:
-            def parse_stream(resp):
-                for chunk in resp:
-                    if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
-                        yield chunk.choices[0].delta.content
-            return parse_stream(response)
         else:
-            output = response.choices[0].message.content
-            if text_format:
-                return response.choices[0].message.tool_calls[0].function
-            return output
+            if json_output:
+                args["response_format"] = { "type": "json_object" }
+            if stream:
+                args["stream"] = stream
+
+            response = self.client.chat.completions.create(**args)
+
+            if stream:
+                def parse_stream(resp):
+                    for chunk in resp:
+                        if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                            yield chunk.choices[0].delta.content
+                return parse_stream(response)
+
+            else:
+                output = response.choices[0].message.content
+                return output
 
 class AzureInferenceModel(BaseLLM):
     def __init__(self, endpoint: str, model_name: str):
