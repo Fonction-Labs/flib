@@ -26,7 +26,7 @@ class BedRockLLMModel(BaseLLM):
         self.client = get_bedrock_client()
 
     def run(
-        self, messages: dict, temperature: float = 1.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
+        self, messages: list[dict[str, str]], temperature: float = 1.0, top_p: float = None, top_k: int = None, stop_sequences: list[str] = None, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
     ) -> (Generator[str, str, None] | str):
         """
         Runs the model with the provided messages and returns the generated response.
@@ -46,7 +46,11 @@ class BedRockLLMModel(BaseLLM):
             messages=messages,
             model_id=self.model_name,
             client=self.client,
+            max_tokens=self.max_tokens,
             temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            stop_sequences=stop_sequences,
             json_output=json_output,
             stream=stream,
         )
@@ -76,13 +80,13 @@ def get_embeddings_bedrock(prompts: list[str], model_id: str, client, input_type
         exit(1)
 
 
-def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: float = 1.0, top_p: float = None, top_k: int = None, stop_sequences: list[str] = None, json_output: bool = False, stream: bool = False) -> str:
+def get_llm_answer_bedrock(messages: list[dict[str, str]], model_id: str, client, max_tokens: int, temperature: float = 1.0, top_p: float = None, top_k: int = None, stop_sequences: list[str] = None, json_output: bool = False, stream: bool = False) -> str:
 
     system_messages = [m for m in messages if m["role"] == "system"]
     messages = [m for m in messages if m["role"] != "system"]
 
     native_request = { "messages": messages,
-                       "max_tokens": self.max_tokens,
+                       "max_tokens": max_tokens,
                        "anthropic_version":
                        "bedrock-2023-05-31",
                        "temperature": temperature }
