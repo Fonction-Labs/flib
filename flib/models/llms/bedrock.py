@@ -20,12 +20,13 @@ class BedRockLLMModel(BaseLLM):
         model_name (str): The name of the Bedrock model to use.
         client: The Bedrock client for making API calls.
     """
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, max_tokens: int):
         self.model_name = model_name
+        self.max_tokens = max_tokens
         self.client = get_bedrock_client()
 
     def run(
-        self, messages: dict, temperature: float = 0.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
+        self, messages: dict, temperature: float = 1.0, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
     ) -> (Generator[str, str, None] | str):
         """
         Runs the model with the provided messages and returns the generated response.
@@ -62,7 +63,7 @@ def get_embeddings_bedrock(prompts: list[str], model_id: str, client, input_type
     body = json.dumps(json_request)
 
     try:
-        response = client.invoke_model(body=body, 
+        response = client.invoke_model(body=body,
                                         modelId=model_id,
                                         accept='application/json',
                                         contentType='application/json')
@@ -75,20 +76,28 @@ def get_embeddings_bedrock(prompts: list[str], model_id: str, client, input_type
         exit(1)
 
 
-# Default temp is 1 on Bedrock ?
-def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: float = 1.0, json_output: bool = False, stream: bool = False) -> str:
-    
+def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: float = 1.0, top_p: float = None, top_k: int = None, stop_sequences: list[str] = None, json_output: bool = False, stream: bool = False) -> str:
+
     system_messages = [m for m in messages if m["role"] == "system"]
     messages = [m for m in messages if m["role"] != "system"]
 
-    native_request = { "messages": messages, 
-                       "max_tokens": 1000, # TODO: handle max_tokens
+    native_request = { "messages": messages,
+                       "max_tokens": self.max_tokens,
                        "anthropic_version":
-                       "bedrock-2023-05-31", 
-                       "temperature": temperature } 
+                       "bedrock-2023-05-31",
+                       "temperature": temperature }
 
     if len(system_messages) > 0:
         native_request["system"] = system_messages[0]["content"]
+
+    if top_p is not None:
+        native_request["top_p"] = top_p
+
+    if top_k is not None:
+        native_request["top_k"] = top_k
+
+    if stop_sequences is not None:
+        native_request["stop_sequences"] = stop_sequences
 
     if json_output:
         warn("Json output not available for Bedrock Models")
@@ -106,7 +115,7 @@ def get_llm_answer_bedrock(messages: str, model_id: str, client, temperature: fl
 
         if json_output:
             return clean_json_output(model_response["content"][0]["text"])
-        
+
         return model_response["content"][0]["text"]
 
     else:
@@ -142,7 +151,7 @@ def convert_pydantic_to_bedrock_tool(
 ) -> Dict[str, Any]:
     """
     Converts a Pydantic model to a tool description for the Amazon Bedrock Converse API.
-    
+
     Args:
         model: The Pydantic model class to convert
         description: Optional description of the tool's purpose
@@ -155,7 +164,7 @@ def convert_pydantic_to_bedrock_tool(
     # Validate input model
     if not isinstance(model, type) or not issubclass(model, BaseModel):
         raise ValueError("Input must be a Pydantic model class")
-    
+
     name = model.__name__
     input_schema = model.model_json_schema()
     tool = {
