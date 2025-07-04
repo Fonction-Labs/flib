@@ -16,7 +16,7 @@ class AnthropicVertexLLMModel(BaseLLM):
     def __init__(self, model_name: str, project_id:str, location: str):
         self.model_name = model_name
         # self.client = AnthropicVertex(region=location, project_id=project_id)
-        self.client = Anthropic(api_key="")
+        self.client = Anthropic()
 
     def run(
         self, messages: list[dict[str, str]], max_tokens: int, temperature: float = 1.0, top_p: float = None, top_k: int = None, stop_sequences: list[str] = None, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
