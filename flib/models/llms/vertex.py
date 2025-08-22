@@ -87,7 +87,7 @@ def get_llm_answer_anthropic(messages: list[dict[str, str]], model_id: str, clie
             top_k=top_k,
             stop_sequences=stop_sequences,
             messages=messages,
-            model="claude-3-5-sonnet-latest",
+            model=model_id,
             stream=stream, # if stream is true, returns a stream (and not a message)
         )
 
