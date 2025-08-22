@@ -15,8 +15,9 @@ class AnthropicVertexLLMModel(BaseLLM):
 
     def __init__(self, model_name: str, project_id:str, location: str):
         self.model_name = model_name
-        # self.client = AnthropicVertex(region=location, project_id=project_id)
-        self.client = Anthropic()
+
+        self.client = AnthropicVertex(region=location, project_id=project_id)
+        #self.client = Anthropic(api_key="")
 
     def run(
         self, messages: list[dict[str, str]], max_tokens: int, temperature: float = 1.0, top_p: float = None, top_k: int = None, stop_sequences: list[str] = None, stream: bool = False, json_output: bool = False, text_format: Optional[Type[BaseModel]] = None
@@ -78,30 +79,39 @@ def get_llm_answer_anthropic(messages: list[dict[str, str]], model_id: str, clie
 
     request = json.dumps(native_request)
 
-    if not stream:
-        try:
-            message = client.messages.create(
-                system=system_messages[0]["content"],
-                max_tokens=max_tokens,
-                top_p=top_p,
-                top_k=top_k,
-                stop_sequences=stop_sequences,
-                messages=messages,
-                model="claude-3-5-sonnet-latest",
-            )
+    try:
+        message = client.messages.create(
+            system=system_messages[0]["content"],
+            max_tokens=max_tokens,
+            top_p=top_p,
+            top_k=top_k,
+            stop_sequences=stop_sequences,
+            messages=messages,
+            model="claude-3-5-sonnet-latest",
+            stream=stream, # if stream is true, returns a stream (and not a message)
+        )
 
-        except Exception as e:
+    except Exception as e:
             print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
-            exit(1)
 
+    if stream:
+
+        chunks = []
+        for event in message: # for event in stream
+            if event.type == "content_block_delta":
+                chunks.append(event.delta.text)
+        answer = "".join(chunks)
+
+        if json_output:
+            return clean_json_output(answer)
+
+        return answer
+
+    else:
         if json_output:
             return clean_json_output(message.content[0].text)
 
         return message.content[0].text
-
-    else:
-        # TODO
-        pass
 
 import os
 from typing import List, Optional
@@ -134,7 +144,8 @@ class VertexAILLMModel(BaseLLM):
         client: The Vertex AI client for making API calls.
     """
     def __init__(self, model_name: str):
-        self.client = genai.Client() # Will automatically fetch GOOGLE_API_KEY env variable
+        genai.configure()
+        self.client = genai.Client() # Will automatically fetch GOOGLE_API_KEY env variable, or Service Account Credentials (ADC)
 
     def run(
     self, messages: list[dict[str, str]], temperature: float = 1.0, top_p: float = None, top_k: int = None, 
