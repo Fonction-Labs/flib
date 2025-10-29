@@ -144,7 +144,7 @@ class VertexAILLMModel(BaseLLM):
         client: The Vertex AI client for making API calls.
     """
     def __init__(self, model_name: str):
-        genai.configure()
+        #genai.configure()
         self.client = genai.Client() # Will automatically fetch GOOGLE_API_KEY env variable, or Service Account Credentials (ADC)
 
     def run(
